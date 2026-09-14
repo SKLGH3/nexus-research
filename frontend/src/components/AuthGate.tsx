@@ -1,0 +1,10 @@
+import { Button, Form, Input, Segmented } from "antd";
+import { useState } from "react";
+import { login, register } from "../lib/api";
+import type { User } from "../types";
+
+export function AuthGate({allowRegistration,onAuthenticated}:{allowRegistration:boolean;onAuthenticated:(user:User)=>void}){
+ const [mode,setMode]=useState<"login"|"register">("login"),[loading,setLoading]=useState(false),[error,setError]=useState("");
+ async function submit(values:{email:string;password:string;display_name?:string}){setLoading(true);setError("");try{const response=mode==="login"?await login(values.email,values.password):await register(values.email,values.display_name||"研究员",values.password);onAuthenticated(response.user);}catch(e){setError(e instanceof Error?e.message:"认证失败");}finally{setLoading(false);}}
+ return <div className="auth-page"><section className="auth-brand"><div className="brand-mark">N</div><span className="eyebrow">NEXUS INTELLIGENCE OS</span><h1>让每一次研究<br/>都有证据、有过程、有沉淀</h1><p>私有化多智能体研究工作台 · v2.0</p></section><section className="auth-card"><span className="panel-kicker">SECURE WORKSPACE</span><h2>{mode==="login"?"登录智研中枢":"创建研究账户"}</h2>{allowRegistration?<Segmented block options={[{label:"登录",value:"login"},{label:"注册",value:"register"}]} value={mode} onChange={value=>setMode(value as "login"|"register")}/>:null}<Form layout="vertical" onFinish={submit}>{mode==="register"?<Form.Item label="显示名称" name="display_name" rules={[{required:true,message:"请输入显示名称"}]}><Input size="large"/></Form.Item>:null}<Form.Item label="邮箱" name="email" rules={[{required:true,type:"email",message:"请输入有效邮箱"}]}><Input size="large" autoComplete="email"/></Form.Item><Form.Item label="密码" name="password" rules={[{required:true,min:8,message:"密码至少 8 位"}]}><Input.Password size="large" autoComplete={mode==="login"?"current-password":"new-password"}/></Form.Item>{error?<div className="auth-error">{error}</div>:null}<Button block htmlType="submit" loading={loading} size="large" type="primary">{mode==="login"?"进入工作台":"创建并登录"}</Button></Form><p className="auth-hint">管理员账号与初始密码配置在本地 <code>.env</code> 中。</p></section></div>;
+}
